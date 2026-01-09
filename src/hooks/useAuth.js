@@ -127,7 +127,11 @@ export function useAuth() {
     updateUserData,
     refreshUser,
     isAuthenticated: !!user,
+    role: user?.role,
     isAdmin: user?.role === 'admin',
+    isDirector: user?.role === 'director',
+    isTeacher: user?.role === 'teacher',
     isStudent: user?.role === 'student',
+    isStaff: ['admin', 'director', 'teacher'].includes(user?.role),
   };
 }
