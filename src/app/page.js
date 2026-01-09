@@ -33,6 +33,8 @@ function AppContent() {
     loading,
   } = useApp();
   const [seeding, setSeeding] = useState(true);
+  const allowedViews = getAllowedViews(user);
+  const fallbackView = ROLE_DEFAULT_VIEW[role] || 'dashboard';
 
   // Seed initial data on first load
   useEffect(() => {
@@ -47,6 +49,21 @@ function AppContent() {
     };
     initData();
   }, []);
+
+  useEffect(() => {
+    if (loading || seeding || !isAuthenticated) return;
+    if (!allowedViews.includes(currentView)) {
+      setCurrentView(fallbackView);
+    }
+  }, [
+    allowedViews,
+    currentView,
+    fallbackView,
+    isAuthenticated,
+    loading,
+    seeding,
+    setCurrentView,
+  ]);
 
   // Loading state
   if (loading || seeding) {
