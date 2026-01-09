@@ -15,6 +15,7 @@ import {
   updateNews,
   deleteNews,
   getAllStudents,
+  getAllUsers,
   enrollUserInCourse,
   markLessonComplete,
   submitAssignment,
@@ -190,7 +191,7 @@ export function useStudents() {
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAllStudents();
+      const data = await getAllUsers();
       setStudents(data);
     } catch (err) {
       setError(err.message);

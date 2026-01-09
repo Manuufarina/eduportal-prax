@@ -148,7 +148,9 @@ export function AuthScreen() {
             <p className="text-slate-400 text-sm text-center">
               {isLogin ? (
                 <>
-                  <span className="block mb-1">Demo Admin: admin@eduportalprax.com / admin123</span>
+                  <span className="block mb-1">Demo Admin: farinamanuel.18@gmail.com / Prax2026</span>
+                  <span className="block">Demo Director: director@eduportalprax.com / director123</span>
+                  <span className="block">Demo Docente: docente@eduportalprax.com / docente123</span>
                   <span className="block">Demo Alumno: alumno@test.com / 123456</span>
                 </>
               ) : (
