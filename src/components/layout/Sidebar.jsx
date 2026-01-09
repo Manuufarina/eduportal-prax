@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/helpers';
 import { useApp } from '@/context/AppContext';
+import { ROLE_LABELS, getAllowedViews } from '@/utils/roles';
 
 const studentMenu = [
   { id: 'dashboard', icon: Home, label: 'Inicio' },
@@ -33,6 +34,20 @@ const adminMenu = [
   { id: 'analytics', icon: TrendingUp, label: 'Analíticas' },
 ];
 
+const directorMenu = [
+  { id: 'dashboard', icon: Home, label: 'Dashboard' },
+  { id: 'manage-students', icon: Users, label: 'Alumnos' },
+  { id: 'manage-news', icon: Bell, label: 'Noticias' },
+  { id: 'analytics', icon: TrendingUp, label: 'Analíticas' },
+];
+
+const teacherMenu = [
+  { id: 'dashboard', icon: Home, label: 'Dashboard' },
+  { id: 'manage-courses', icon: BookOpen, label: 'Gestionar Cursos' },
+  { id: 'submissions', icon: FileText, label: 'Entregas' },
+  { id: 'manage-news', icon: Bell, label: 'Noticias' },
+];
+
 export function Sidebar() {
   const {
     user,
@@ -41,10 +56,19 @@ export function Sidebar() {
     setCurrentView,
     sidebarCollapsed,
     setSidebarCollapsed,
+    role,
     isAdmin,
+    isDirector,
+    isTeacher,
   } = useApp();
 
-  const menu = isAdmin ? adminMenu : studentMenu;
+  const allowedViews = getAllowedViews(user);
+  const menu = (() => {
+    if (isAdmin) return adminMenu;
+    if (isDirector) return directorMenu;
+    if (isTeacher) return teacherMenu;
+    return studentMenu;
+  })().filter((item) => allowedViews.includes(item.id));
 
   if (!user) return null;
 
@@ -108,7 +132,7 @@ export function Sidebar() {
               <div className="flex-1 min-w-0">
                 <p className="text-white font-medium truncate">{user.name}</p>
                 <p className="text-xs text-slate-400 capitalize">
-                  {isAdmin ? 'Administrador' : 'Estudiante'}
+                  {ROLE_LABELS[role] || 'Usuario'}
                 </p>
               </div>
             )}
