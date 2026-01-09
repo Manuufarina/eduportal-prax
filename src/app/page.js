@@ -18,10 +18,23 @@ import { Submissions } from '@/components/admin/Submissions';
 import { ManageNews } from '@/components/admin/ManageNews';
 import { Analytics } from '@/components/admin/Analytics';
 import { seedInitialData } from '@/lib/firestore';
+import { ROLE_DEFAULT_VIEW, getAllowedViews } from '@/utils/roles';
 
 function AppContent() {
-  const { isAuthenticated, isAdmin, currentView, loading } = useApp();
+  const {
+    isAuthenticated,
+    role,
+    user,
+    isAdmin,
+    isDirector,
+    isTeacher,
+    currentView,
+    setCurrentView,
+    loading,
+  } = useApp();
   const [seeding, setSeeding] = useState(true);
+  const allowedViews = getAllowedViews(user);
+  const fallbackView = ROLE_DEFAULT_VIEW[role] || 'dashboard';
 
   // Seed initial data on first load
   useEffect(() => {
@@ -36,6 +49,21 @@ function AppContent() {
     };
     initData();
   }, []);
+
+  useEffect(() => {
+    if (loading || seeding || !isAuthenticated) return;
+    if (!allowedViews.includes(currentView)) {
+      setCurrentView(fallbackView);
+    }
+  }, [
+    allowedViews,
+    currentView,
+    fallbackView,
+    isAuthenticated,
+    loading,
+    seeding,
+    setCurrentView,
+  ]);
 
   // Loading state
   if (loading || seeding) {
@@ -60,31 +88,29 @@ function AppContent() {
 
   // Render view based on current view and role
   const renderView = () => {
-    if (isAdmin) {
-      switch (currentView) {
-        case 'dashboard':
-          return <AdminDashboard />;
-        case 'manage-courses':
-          return <ManageCourses />;
-        case 'edit-course':
-          return <EditCourseLessons />;
-        case 'manage-students':
-          return <ManageStudents />;
-        case 'submissions':
-          return <Submissions />;
-        case 'manage-news':
-          return <ManageNews />;
-        case 'analytics':
-          return <Analytics />;
-        default:
-          return <AdminDashboard />;
-      }
+    if (!allowedViews.includes(currentView)) {
+      return isAdmin || isDirector || isTeacher ? (
+        <AdminDashboard />
+      ) : (
+        <StudentDashboard />
+      );
     }
 
-    // Student views
     switch (currentView) {
       case 'dashboard':
-        return <StudentDashboard />;
+        return isAdmin || isDirector || isTeacher ? <AdminDashboard /> : <StudentDashboard />;
+      case 'manage-courses':
+        return <ManageCourses />;
+      case 'edit-course':
+        return <EditCourseLessons />;
+      case 'manage-students':
+        return <ManageStudents />;
+      case 'submissions':
+        return <Submissions />;
+      case 'manage-news':
+        return <ManageNews />;
+      case 'analytics':
+        return <Analytics />;
       case 'courses':
         return <CourseCatalog />;
       case 'my-courses':
@@ -96,7 +122,7 @@ function AppContent() {
       case 'news':
         return <NewsSection />;
       default:
-        return <StudentDashboard />;
+        return isAdmin || isDirector || isTeacher ? <AdminDashboard /> : <StudentDashboard />;
     }
   };
 

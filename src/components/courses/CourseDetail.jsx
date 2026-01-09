@@ -158,6 +158,7 @@ export function CourseDetail() {
             const isComplete = completedLessons.includes(lesson.id);
             const submission = getSubmission(lesson.id);
             const isExpanded = selectedLesson === lesson.id;
+            const messages = lesson.messages || [];
 
             return (
               <Card
@@ -289,6 +290,49 @@ export function CourseDetail() {
                         )}
                       </div>
                     )}
+
+                    {/* Messages */}
+                    <div className="bg-white/5 rounded-xl p-4">
+                      <h4 className="text-white font-medium mb-3">
+                        Mensajes de la clase
+                      </h4>
+                      {messages.length === 0 ? (
+                        <p className="text-sm text-slate-400">
+                          Todavía no hay mensajes para esta clase.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {messages.map((message, i) => {
+                            const parsedDate = message.createdAt
+                              ? new Date(message.createdAt)
+                              : null;
+                            const dateLabel =
+                              parsedDate && !Number.isNaN(parsedDate.getTime())
+                                ? parsedDate.toLocaleDateString('es-AR')
+                                : message.createdAt;
+
+                            return (
+                              <div
+                                key={message.id || i}
+                                className="border-b border-white/10 pb-3 last:border-b-0 last:pb-0"
+                              >
+                                <p className="text-sm text-white font-medium">
+                                  {message.author || 'Equipo docente'}
+                                </p>
+                                <p className="text-sm text-slate-300">
+                                  {message.content}
+                                </p>
+                                {dateLabel && (
+                                  <p className="text-xs text-slate-500 mt-1">
+                                    {dateLabel}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
 
                     {/* Mark Complete Button */}
                     <div className="flex justify-end">

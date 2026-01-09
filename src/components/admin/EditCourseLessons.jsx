@@ -10,7 +10,7 @@ import { Modal, ConfirmModal } from '@/components/ui/Modal';
 import { Input, Textarea, Checkbox } from '@/components/ui/Input';
 
 export function EditCourseLessons() {
-  const { selectedCourse, setCurrentView } = useApp();
+  const { selectedCourse, setCurrentView, fetchCourses } = useApp();
   const { course, addLesson, editLesson, removeLesson, fetchCourse } = useCourse(selectedCourse?.id);
   
   const [showModal, setShowModal] = useState(false);
@@ -25,8 +25,10 @@ export function EditCourseLessons() {
     hasAssignment: false,
     assignmentDesc: '',
     files: [],
+    messages: [],
   });
-  const [newFile, setNewFile] = useState({ name: '', size: '' });
+  const [newFile, setNewFile] = useState({ file: null, name: '', size: '' });
+  const [newMessage, setNewMessage] = useState({ author: '', content: '' });
 
   if (!course) {
     return (
@@ -45,9 +47,11 @@ export function EditCourseLessons() {
       hasAssignment: false,
       assignmentDesc: '',
       files: [],
+      messages: [],
     });
     setEditingLesson(null);
-    setNewFile({ name: '', size: '' });
+    setNewFile({ file: null, name: '', size: '' });
+    setNewMessage({ author: '', content: '' });
   };
 
   const handleOpenModal = (lesson = null) => {
@@ -61,6 +65,7 @@ export function EditCourseLessons() {
         hasAssignment: lesson.hasAssignment || false,
         assignmentDesc: lesson.assignmentDesc || '',
         files: lesson.files || [],
+        messages: lesson.messages || [],
       });
     } else {
       resetForm();
@@ -75,6 +80,8 @@ export function EditCourseLessons() {
       } else {
         await addLesson(formData);
       }
+      await fetchCourse();
+      await fetchCourses();
       setShowModal(false);
       resetForm();
     } catch (error) {
@@ -86,6 +93,8 @@ export function EditCourseLessons() {
     if (lessonToDelete) {
       try {
         await removeLesson(lessonToDelete.id);
+        await fetchCourse();
+        await fetchCourses();
         setLessonToDelete(null);
       } catch (error) {
         console.error('Error deleting lesson:', error);
@@ -93,13 +102,38 @@ export function EditCourseLessons() {
     }
   };
 
+  const formatFileSize = (bytes) => {
+    if (!bytes && bytes !== 0) return '';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex += 1;
+    }
+    return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+  };
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setNewFile({ file: null, name: '', size: '' });
+      return;
+    }
+    setNewFile({
+      file,
+      name: file.name,
+      size: formatFileSize(file.size),
+    });
+  };
+
   const addFile = () => {
-    if (newFile.name) {
+    if (newFile.file || newFile.name) {
       setFormData({
         ...formData,
-        files: [...formData.files, { ...newFile }],
+        files: [...formData.files, { name: newFile.name, size: newFile.size }],
       });
-      setNewFile({ name: '', size: '' });
+      setNewFile({ file: null, name: '', size: '' });
     }
   };
 
@@ -107,6 +141,28 @@ export function EditCourseLessons() {
     setFormData({
       ...formData,
       files: formData.files.filter((_, i) => i !== index),
+    });
+  };
+
+  const addMessage = () => {
+    if (!newMessage.content.trim()) return;
+    const message = {
+      id: Date.now().toString(),
+      author: newMessage.author || 'Equipo docente',
+      content: newMessage.content,
+      createdAt: new Date().toISOString(),
+    };
+    setFormData({
+      ...formData,
+      messages: [...(formData.messages || []), message],
+    });
+    setNewMessage({ author: '', content: '' });
+  };
+
+  const removeMessage = (index) => {
+    setFormData({
+      ...formData,
+      messages: formData.messages.filter((_, i) => i !== index),
     });
   };
 
@@ -254,7 +310,12 @@ export function EditCourseLessons() {
                 </div>
               ))}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 md:flex-row">
+              <Input
+                type="file"
+                onChange={handleFileSelect}
+                containerClassName="flex-1"
+              />
               <Input
                 placeholder="Nombre del archivo"
                 value={newFile.name}
@@ -293,6 +354,61 @@ export function EditCourseLessons() {
                 }
               />
             )}
+          </div>
+
+          {/* Messages Section */}
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">
+              Mensajes de la clase
+            </label>
+            <div className="space-y-2 mb-3">
+              {formData.messages?.map((message, i) => (
+                <div
+                  key={message.id || i}
+                  className="flex items-start justify-between gap-3 p-3 bg-white/5 rounded-xl"
+                >
+                  <div>
+                    <p className="text-white text-sm font-medium">
+                      {message.author || 'Equipo docente'}
+                    </p>
+                    <p className="text-slate-400 text-sm">{message.content}</p>
+                  </div>
+                  <button
+                    onClick={() => removeMessage(i)}
+                    className="text-red-400 hover:text-red-300"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+              {(!formData.messages || formData.messages.length === 0) && (
+                <div className="text-sm text-slate-500 bg-white/5 rounded-xl p-3">
+                  Sin mensajes todavía.
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <Input
+                placeholder="Autor"
+                value={newMessage.author}
+                onChange={(e) =>
+                  setNewMessage({ ...newMessage, author: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Escribí un mensaje para la clase"
+                value={newMessage.content}
+                onChange={(e) =>
+                  setNewMessage({ ...newMessage, content: e.target.value })
+                }
+                containerClassName="md:col-span-2"
+              />
+            </div>
+            <div className="flex justify-end mt-2">
+              <Button onClick={addMessage} className="px-4">
+                Agregar mensaje
+              </Button>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">

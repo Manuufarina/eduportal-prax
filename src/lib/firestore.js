@@ -89,6 +89,16 @@ export const getAllStudents = async () => {
   }
 };
 
+export const getAllUsers = async () => {
+  try {
+    const snapshot = await getDocs(collection(db, COLLECTIONS.USERS));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error getting users:', error);
+    throw error;
+  }
+};
+
 // ==================== COURSE OPERATIONS ====================
 export const createCourse = async (courseData) => {
   try {
@@ -425,11 +435,35 @@ export const seedInitialData = async () => {
 
     // Seed admin user
     await addDoc(collection(db, COLLECTIONS.USERS), {
-      email: 'admin@eduportalprax.com',
-      password: 'admin123',
-      name: 'Administrador',
+      email: 'farinamanuel.18@gmail.com',
+      password: 'Prax2026',
+      name: 'Administrador total',
       role: 'admin',
       avatar: '👨‍💼',
+      createdAt: serverTimestamp(),
+      enrolledCourses: [],
+      progress: {},
+    });
+
+    // Seed director user
+    await addDoc(collection(db, COLLECTIONS.USERS), {
+      email: 'director@eduportalprax.com',
+      password: 'director123',
+      name: 'Dirección General',
+      role: 'director',
+      avatar: '🧑‍💼',
+      createdAt: serverTimestamp(),
+      enrolledCourses: [],
+      progress: {},
+    });
+
+    // Seed teacher user
+    await addDoc(collection(db, COLLECTIONS.USERS), {
+      email: 'docente@eduportalprax.com',
+      password: 'docente123',
+      name: 'Docente Demo',
+      role: 'teacher',
+      avatar: '👩‍🏫',
       createdAt: serverTimestamp(),
       enrolledCourses: [],
       progress: {},
@@ -471,6 +505,14 @@ export const seedInitialData = async () => {
           ],
           duration: '45 min',
           hasAssignment: false,
+          messages: [
+            {
+              id: 'm1',
+              author: 'Equipo académico',
+              content: 'Bienvenidos a la primera clase. Revisen el material antes del viernes.',
+              createdAt: new Date().toISOString(),
+            },
+          ],
         },
         {
           id: '2',
@@ -481,6 +523,7 @@ export const seedInitialData = async () => {
           duration: '60 min',
           hasAssignment: true,
           assignmentDesc: 'Realizar un informe sobre los criaderos identificados en tu zona',
+          messages: [],
         },
       ],
     });
@@ -505,6 +548,7 @@ export const seedInitialData = async () => {
           files: [{ name: 'Normativa_2024.pdf', size: '1.5 MB' }],
           duration: '40 min',
           hasAssignment: false,
+          messages: [],
         },
       ],
     });
