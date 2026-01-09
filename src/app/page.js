@@ -60,6 +60,16 @@ function AppContent() {
     );
   }
 
+  const allowedViews = getAllowedViews(user);
+  const fallbackView = ROLE_DEFAULT_VIEW[role] || 'dashboard';
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (!allowedViews.includes(currentView)) {
+      setCurrentView(fallbackView);
+    }
+  }, [allowedViews, currentView, fallbackView, isAuthenticated, setCurrentView]);
+
   // Not authenticated - show auth screen
   if (!isAuthenticated) {
     return (
